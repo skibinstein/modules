@@ -1,0 +1,31 @@
+project_id: "fluent-drummer-468119-c3"
+region: "eu-central2"
+env: alpha
+
+# storage
+gcs:
+  source: "github.com/skibinstein/modules//gcs?ref=1.1.0"
+  depends_on:
+    - cloud_run
+  items:
+    - name: "my-app-assets-001"
+      location: "eu-west2"
+      storage_class: "STANDARD"
+      versioning: true
+      iam:
+        "roles/storage.objectViewer":
+          - "group:dev-team@example.com"
+          - "serviceAccount:app-engine-sa@your-project.iam.gserviceaccount.com"
+          - "serviceAccount:app-engine-sa@external-project.iam.gserviceaccount.com"
+      lifecycle_rules:
+        - action:
+            type: "SetStorageClass"
+            storage_class: "NEARLINE"
+          condition:
+            age: 30
+        - action:
+            type: "Delete"
+          condition:
+            age: 365
+    - name: "my-app-assets-002"
+    - name: "my-app-assets-003"
