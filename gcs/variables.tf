@@ -3,8 +3,10 @@ variable "project_id" {
   description = "GCP Project ID."
 }
 
-variable "buckets" {
-  description = "Map of Buckets to be Created."
+variable "gcs" {
+  description = "GCS config with items."
+  type        = any
+  default     = null
 }
 
 variable "region" {
@@ -33,7 +35,7 @@ variable "bucket_default" {
       log_bucket        = string
       log_object_prefix = string
     })
-    lifecycle_rule = object({
+    lifecycle_rules = list(object({
       action = map(string)
       condition = object({
         age                   = number
@@ -42,7 +44,7 @@ variable "bucket_default" {
         matches_storage_class = list(string)
         num_newer_versions    = number
       })
-    })
+    }))
   })
   default = {
     bucket_name                 = null
@@ -55,6 +57,6 @@ variable "bucket_default" {
     accesses                    = []
     retention_policy            = null
     logging                     = null
-    lifecycle_rule              = null
+    lifecycle_rules             = []
   }
 }
