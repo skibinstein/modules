@@ -2,6 +2,11 @@ project_id: "fluent-drummer-468119-c3"
 region: "eu-central2"
 env: alpha
 
+terraform:
+  required_version: ">= 1.14.0, < 2.0.0"
+  providers:
+    google: "~> 7.16.0"
+
 # storage
 gcs:
   source: "github.com/skibinstein/modules//gcs?ref=1.1.0"

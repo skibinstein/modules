@@ -76,19 +76,19 @@ def _generate_providers_tf() -> str:
     )
 
 
-def _generate_versions_tf() -> str:
+def _generate_versions_tf(required_version: str, provider_version: str) -> str:
     return "\n".join(
         [
             "terraform {",
-            '  required_version = ">= 1.14.0, < 2.0.0"',
+            f'  required_version = "{required_version}"',
             "  required_providers {",
             "    google = {",
             '      source  = "hashicorp/google"',
-            '      version = "~> 7.16.0"',
+            f'      version = "{provider_version}"',
             "    }",
             "    google-beta = {",
             '      source  = "hashicorp/google-beta"',
-            '      version = "~> 7.16.0"',
+            f'      version = "{provider_version}"',
             "    }",
             "  }",
             "}",
@@ -100,11 +100,20 @@ def _generate_main_tf(data: dict, module_keys: list[str]) -> str:
     lines: list[str] = []
     for key in module_keys:
         source = data[key]["source"]
+        depends_on = data[key].get("depends_on")
         lines.append(f'module "{key}" {{')
         lines.append(f'  source     = "{source}"')
         lines.append("  project_id = var.project_id")
         lines.append("  region     = var.region")
         lines.append(f"  {key}        = var.{key}")
+        if depends_on is not None:
+            if isinstance(depends_on, list):
+                refs = ", ".join([f"module.{name}" for name in depends_on])
+                lines.append(f"  depends_on = [{refs}]")
+            elif isinstance(depends_on, str) and depends_on != "":
+                lines.append(f"  depends_on = [module.{depends_on}]")
+            else:
+                lines.append("  depends_on = []")
         lines.append("}")
         lines.append("")
     return "\n".join(lines).rstrip()
@@ -135,11 +144,24 @@ def main() -> None:
 
     write_tfvars_json(data, output_file)
 
+    terraform_cfg = data.get("terraform", {})
+    required_version = terraform_cfg.get("required_version")
+    providers_cfg = terraform_cfg.get("providers", {})
+    provider_version = providers_cfg.get("google")
+    provider_beta_version = providers_cfg.get("google-beta", provider_version)
+
+    if required_version is None or provider_version is None:
+        print("Error: terraform.required_version and terraform.providers.google are required.")
+        sys.exit(1)
+    if provider_beta_version != provider_version:
+        print("Error: terraform.providers.google-beta must match terraform.providers.google.")
+        sys.exit(1)
+
     module_keys = _module_keys(data)
     _write_file(deploy_dir / "main.tf", _generate_main_tf(data, module_keys))
     _write_file(deploy_dir / "providers.tf", _generate_providers_tf())
     _write_file(deploy_dir / "variables.tf", _generate_variables_tf(data, module_keys))
-    _write_file(deploy_dir / "versions.tf", _generate_versions_tf())
+    _write_file(deploy_dir / "versions.tf", _generate_versions_tf(required_version, provider_version))
 
     print(f"Generated: {output_file}")
 
