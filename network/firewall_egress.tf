@@ -1,6 +1,6 @@
 resource "google_compute_firewall" "deny_all_egress" {
   count       = var.deny_egress ? 1 : 0
-  project     = var.project_name
+  project     = local.project_id
   name        = join("-", [local.common_resource_id, var.custom_deny_egress_fw_name])
   network     = google_compute_network.vpc_network.name
   description = "Deny all traffic by default"
@@ -19,7 +19,7 @@ resource "google_compute_firewall" "deny_all_egress" {
 
 resource "google_compute_firewall" "allow_internal_communication" {
   count     = var.allow_internal_communication ? 1 : 0
-  project   = var.project_name
+  project   = local.project_id
   name      = join("-", [local.common_resource_id, var.custom_allow_internal_communication_fw_name])
   network   = google_compute_network.vpc_network.name
   direction = "EGRESS"
@@ -43,7 +43,7 @@ resource "google_compute_firewall" "allow_internal_communication" {
 }
 
 resource "google_compute_firewall" "allow_github" {
-  project   = var.project_name
+  project   = local.project_id
   count     = var.allow_github_access ? 1 : 0
   name      = join("-", [local.common_resource_id, var.custom_allow_github_fw_name])
   network   = google_compute_network.vpc_network.name
@@ -67,7 +67,7 @@ resource "google_compute_firewall" "allow_github" {
 }
 
 resource "google_compute_firewall" "allow_restricted_google_apis" {
-  project   = var.project_name
+  project   = local.project_id
   count     = var.restricted_google_apis ? 1 : 0
   name      = join("-", [local.common_resource_id, var.custom_allow_restricted_google_apis_fw_name])
   network   = google_compute_network.vpc_network.name
@@ -86,7 +86,7 @@ resource "google_compute_firewall" "allow_restricted_google_apis" {
 }
 
 resource "google_compute_firewall" "allow_private_google_apis" {
-  project   = var.project_name
+  project   = local.project_id
   count     = var.private_google_apis ? 1 : 0
   name      = join("-", [local.common_resource_id, var.custom_allow_private_google_apis_fw_name])
   network   = google_compute_network.vpc_network.name

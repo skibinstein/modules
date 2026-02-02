@@ -1,11 +1,39 @@
 locals {
+  project_id = var.project_id
+  network = try(var.network.items[0], null)
+  subnets = coalescelist(
+    var.network != null ? [
+      for subnet in try(local.network.subnets, []) : {
+        name                  = subnet.name
+        ip_cidr_range         = subnet.ip_cidr_range
+        region                = try(subnet.region, null)
+        allow_nat             = try(subnet.allow_nat, null)
+        enable_private_access = try(subnet.enable_private_access, null)
+        flow_logs_config      = try(subnet.flow_logs_config, null)
+      }
+    ] : var.subnets,
+    [
+      {
+        name           = "public",
+        ip_cidr_range  = cidrsubnet(local.valid_subnet_range, local.network_size_step, 1),
+        region         = var.region,
+        allow_nat      = true
+      },
+      {
+        name          = "private",
+        ip_cidr_range = cidrsubnet(local.valid_subnet_range, local.network_size_step, 2),
+        allow_nat     = false
+      }
+    ]
+  )
+
   # Allowed ranges for VPC Subnet
   # https://cloud.google.com/vpc/docs/vpc
   valid_subnet_range = try(var.valid_subnet_range, "192.168.0.0/16")
   network_size_step  = 20 - tonumber(split("/", local.valid_subnet_range)[1])
 
 
-  common_resource_id = coalesce(var.common_resource_id, replace(var.project_name, "_", "-"))
+  common_resource_id = coalesce(var.common_resource_id, replace(local.project_id, "_", "-"))
 
   nat_external_ips = coalescelist(
     var.nat_external_ips,
@@ -44,20 +72,6 @@ locals {
       var.external_subnets_allows_nats
     ) : subnet.self_link => subnet if subnet != null
   }
-
-  subnets = coalescelist(var.subnets, [
-    {
-      name      = "public",
-      cidr      = cidrsubnet(local.valid_subnet_range, local.network_size_step, 1),
-      region    = var.region
-      allow_nat = true
-    },
-    {
-      name      = "private",
-      cidr      = cidrsubnet(local.valid_subnet_range, local.network_size_step, 2),
-      allow_nat = false
-    }
-  ])
 
   psc_ip_range = coalesce(
     var.private_service_connect_cidr,

@@ -1,12 +1,18 @@
 resource "google_compute_network" "vpc_network" {
-  name                    = var.custom_vpc_name == "" ? "${local.common_resource_id}-vpc" : var.custom_vpc_name
-  project                 = var.project_name
-  auto_create_subnetworks = false
+  name = coalesce(
+    try(local.network.name, null),
+    var.custom_vpc_name != "" ? var.custom_vpc_name : null,
+    "${local.common_resource_id}-vpc"
+  )
+  project                 = local.project_id
+  auto_create_subnetworks = coalesce(try(local.network.auto_create_subnetworks, null), var.auto_create_subnetworks)
+  routing_mode            = coalesce(try(local.network.routing_mode, null), var.routing_mode)
+  description             = coalesce(try(local.network.description, null), var.description)
 }
 
 resource "google_compute_router" "router" {
   for_each = local.distinct_nat_regions
-  project  = var.project_name
+  project  = local.project_id
   name     = var.custom_router_name == "" ? "${local.common_resource_id}-router-${replace(each.value, ".", "-")}" : var.custom_router_name
   network  = google_compute_network.vpc_network.self_link
   region   = each.value
@@ -16,7 +22,7 @@ resource "google_compute_router" "router" {
 }
 
 resource "google_compute_address" "nat_external_ip" {
-  project     = var.project_name
+  project     = local.project_id
   for_each    = { for ip in local.nat_external_ips : ip.name => ip }
   name        = each.key
   description = each.value.description
@@ -26,7 +32,7 @@ resource "google_compute_address" "nat_external_ip" {
 resource "google_compute_router_nat" "router_nat" {
   for_each               = local.dont_create_nat ? toset([]) : local.distinct_nat_regions
   provider               = google-beta
-  project                = var.project_name
+  project                = local.project_id
   region                 = each.value
   name                   = var.custom_nat_name == "" ? "${local.common_resource_id}-nat-gateway-${replace(each.value, ".", "-")}" : var.custom_nat_name
   router                 = google_compute_router.router[each.key].name
@@ -56,16 +62,16 @@ resource "google_compute_router_nat" "router_nat" {
 
 resource "google_compute_subnetwork" "subnets" {
   for_each                 = { for subnet in local.subnets : subnet.name => subnet }
-  project                  = var.project_name
+  project                  = local.project_id
   name                     = "${local.common_resource_id}-subnet-${each.value.name}"
   network                  = google_compute_network.vpc_network.name
   region                   = coalesce(each.value.region, var.region)
-  private_ip_google_access = true
-  ip_cidr_range            = each.value.cidr
+  private_ip_google_access = coalesce(each.value.enable_private_access, true)
+  ip_cidr_range            = each.value.ip_cidr_range
 
   log_config {
-    aggregation_interval = "INTERVAL_30_SEC"
-    flow_sampling        = 1
-    metadata             = "INCLUDE_ALL_METADATA"
+    aggregation_interval = try(each.value.flow_logs_config.aggregation_interval, "INTERVAL_30_SEC")
+    flow_sampling        = try(each.value.flow_logs_config.flow_sampling, 1)
+    metadata             = try(each.value.flow_logs_config.metadata, "INCLUDE_ALL_METADATA")
   }
 }

@@ -1,4 +1,4 @@
-variable "project_name" {
+variable "project_id" {
   type        = string
   description = "The GCP project ID where resources will be created."
 }
@@ -7,6 +7,30 @@ variable "region" {
   type        = string
   description = "The GCP region to deploy resources into."
   default     = "europe-west3"
+}
+
+variable "network" {
+  type        = any
+  description = "Network module config with items."
+  default     = null
+}
+
+variable "auto_create_subnetworks" {
+  type        = bool
+  default     = false
+  description = "Whether to create subnetworks automatically."
+}
+
+variable "routing_mode" {
+  type        = string
+  default     = "REGIONAL"
+  description = "Routing mode for the VPC network."
+}
+
+variable "description" {
+  type        = string
+  default     = null
+  description = "Description for the VPC network."
 }
 
 variable "common_resource_id" {
@@ -115,10 +139,16 @@ variable "custom_allow_private_google_apis_fw_name" {
 variable "subnets" {
   description = "A list of subnet objects to create in the VPC. If not provided, a default 'public' and 'private' subnet will be created."
   type = list(object({
-    name      = string
-    cidr      = string
-    region    = optional(string)
-    allow_nat = optional(bool)
+    name                   = string
+    ip_cidr_range          = string
+    region                 = optional(string)
+    allow_nat              = optional(bool)
+    enable_private_access  = optional(bool)
+    flow_logs_config = optional(object({
+      flow_sampling         = optional(number)
+      aggregation_interval  = optional(string)
+      metadata              = optional(string)
+    }))
   }))
   default = null
 }
