@@ -21,10 +21,8 @@ locals {
   ]
 
   # VF LOCALS 
-  # list of buckets
-  all_buckets = [for i in local.buckets : merge(var.bucket_default, i)]
   # map of buckets
-  bucket_map = { for bucket in local.all_buckets : bucket.bucket_name => bucket }
+  bucket_map = { for bucket in local.buckets : bucket.bucket_name => bucket }
 
   # assigning roles 
   bucket_role_members = merge([for bucket in local.bucket_map :
