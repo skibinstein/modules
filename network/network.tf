@@ -1,19 +1,19 @@
 resource "google_compute_network" "vpc_network" {
   name = coalesce(
     try(local.network.name, null),
-    var.custom_vpc_name != "" ? var.custom_vpc_name : null,
+    local.custom_vpc_name != "" ? local.custom_vpc_name : null,
     "${local.common_resource_id}-vpc"
   )
   project                 = local.project_id
-  auto_create_subnetworks = coalesce(try(local.network.auto_create_subnetworks, null), var.auto_create_subnetworks)
-  routing_mode            = coalesce(try(local.network.routing_mode, null), var.routing_mode)
-  description             = coalesce(try(local.network.description, null), var.description)
+  auto_create_subnetworks = local.auto_create_subnetworks
+  routing_mode            = local.routing_mode
+  description             = local.description
 }
 
 resource "google_compute_router" "router" {
   for_each = local.distinct_nat_regions
   project  = local.project_id
-  name     = var.custom_router_name == "" ? "${local.common_resource_id}-router-${replace(each.value, ".", "-")}" : var.custom_router_name
+  name     = local.custom_router_name == "" ? "${local.common_resource_id}-router-${replace(each.value, ".", "-")}" : local.custom_router_name
   network  = google_compute_network.vpc_network.self_link
   region   = each.value
   bgp {
@@ -34,9 +34,9 @@ resource "google_compute_router_nat" "router_nat" {
   provider               = google-beta
   project                = local.project_id
   region                 = each.value
-  name                   = var.custom_nat_name == "" ? "${local.common_resource_id}-nat-gateway-${replace(each.value, ".", "-")}" : var.custom_nat_name
+  name                   = local.custom_nat_name == "" ? "${local.common_resource_id}-nat-gateway-${replace(each.value, ".", "-")}" : local.custom_nat_name
   router                 = google_compute_router.router[each.key].name
-  min_ports_per_vm       = var.min_ports_per_vm
+  min_ports_per_vm       = local.min_ports_per_vm
   nat_ip_allocate_option = "MANUAL_ONLY"
   nat_ips = [
     for ip in local.nat_external_ips :
@@ -44,7 +44,7 @@ resource "google_compute_router_nat" "router_nat" {
     if ip.region == each.value
   ]
 
-  source_subnetwork_ip_ranges_to_nat = var.nat_source_mode
+  source_subnetwork_ip_ranges_to_nat = local.nat_source_mode
 
   dynamic "subnetwork" {
     for_each = local.allowed_natted_subnets
@@ -56,7 +56,7 @@ resource "google_compute_router_nat" "router_nat" {
 
   log_config {
     enable = true
-    filter = var.nat_log_filter
+    filter = local.nat_log_filter
   }
 }
 
@@ -65,7 +65,7 @@ resource "google_compute_subnetwork" "subnets" {
   project                  = local.project_id
   name                     = "${local.common_resource_id}-subnet-${each.value.name}"
   network                  = google_compute_network.vpc_network.name
-  region                   = coalesce(each.value.region, var.region)
+  region                   = coalesce(each.value.region, local.region)
   private_ip_google_access = coalesce(each.value.enable_private_access, true)
   ip_cidr_range            = each.value.ip_cidr_range
 

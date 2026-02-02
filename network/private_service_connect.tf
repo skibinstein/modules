@@ -1,15 +1,15 @@
 resource "google_project_service" "enable_service_networking_api" {
-  for_each           = var.enable_private_service_connect ? toset(["psc"]) : toset([])
+  for_each           = local.enable_private_service_connect ? toset(["psc"]) : toset([])
   project            = local.project_id
   service            = "servicenetworking.googleapis.com"
   disable_on_destroy = false
 }
 
 resource "google_compute_global_address" "psc_ip_range" {
-  for_each      = var.enable_private_service_connect ? toset(["psc"]) : toset([])
+  for_each      = local.enable_private_service_connect ? toset(["psc"]) : toset([])
   provider      = google-beta
   project       = local.project_id
-  name          = var.global_address_name
+  name          = local.global_address_name
   purpose       = "VPC_PEERING"
   address_type  = "INTERNAL"
   address       = split("/", local.psc_ip_range)[0]
@@ -19,7 +19,7 @@ resource "google_compute_global_address" "psc_ip_range" {
 }
 
 resource "google_service_networking_connection" "private_vpc_connection" {
-  for_each   = var.enable_private_service_connect ? toset(["psc"]) : toset([])
+  for_each   = local.enable_private_service_connect ? toset(["psc"]) : toset([])
   provider   = google-beta
   network    = google_compute_network.vpc_network.id
   service    = "servicenetworking.googleapis.com"
@@ -29,7 +29,7 @@ resource "google_service_networking_connection" "private_vpc_connection" {
 }
 
 resource "google_compute_network_peering_routes_config" "peering_primary_routes" {
-  for_each = var.enable_private_service_connect ? toset(["psc"]) : toset([])
+  for_each = local.enable_private_service_connect ? toset(["psc"]) : toset([])
   project = local.project_id
   peering = "servicenetworking-googleapis-com"
   network = google_compute_network.vpc_network.name
