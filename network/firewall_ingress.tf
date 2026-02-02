@@ -1,5 +1,5 @@
 resource "google_compute_firewall" "allow_ingress_ssh_via_IAP" {
-  count     = var.ingress_ssh_via_IAP ? 1 : 0
+  count     = local.ingress_ssh_via_IAP ? 1 : 0
   project   = local.project_id
   name      = join("-", [local.common_resource_id, "ingress-allow-ssh-via-iap"])
   network   = google_compute_network.vpc_network.name
@@ -20,7 +20,7 @@ resource "google_compute_firewall" "allow_ingress_ssh_via_IAP" {
 }
 
 resource "google_compute_firewall" "allow_ingress_health_check" {
-  count       = var.ingress_health_check ? 1 : 0
+  count       = local.ingress_health_check ? 1 : 0
   project     = local.project_id
   name        = join("-", [local.common_resource_id, "ingress-health"])
   network     = google_compute_network.vpc_network.name
