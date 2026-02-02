@@ -1,22 +1,6 @@
 locals {
   project_id = var.project_id
   network = try(var.network.items[0], null)
-  effective_custom_vpc_name = (
-    var.custom_vpc_name != "" ? var.custom_vpc_name : try(local.network.name, "")
-  )
-  effective_auto_create_subnetworks = coalesce(
-    try(local.network.auto_create_subnetworks, null),
-    var.auto_create_subnetworks
-  )
-  effective_routing_mode = coalesce(
-    try(local.network.routing_mode, null),
-    var.routing_mode
-  )
-  effective_description = coalesce(
-    try(local.network.description, null),
-    var.description
-  )
-
   subnets = coalescelist(
     var.network != null ? [
       for subnet in try(local.network.subnets, []) : {

@@ -1,9 +1,13 @@
 resource "google_compute_network" "vpc_network" {
-  name                    = local.effective_custom_vpc_name == "" ? "${local.common_resource_id}-vpc" : local.effective_custom_vpc_name
+  name = coalesce(
+    try(local.network.name, null),
+    var.custom_vpc_name != "" ? var.custom_vpc_name : null,
+    "${local.common_resource_id}-vpc"
+  )
   project                 = local.project_id
-  auto_create_subnetworks = local.effective_auto_create_subnetworks
-  routing_mode            = local.effective_routing_mode
-  description             = local.effective_description
+  auto_create_subnetworks = coalesce(try(local.network.auto_create_subnetworks, null), var.auto_create_subnetworks)
+  routing_mode            = coalesce(try(local.network.routing_mode, null), var.routing_mode)
+  description             = coalesce(try(local.network.description, null), var.description)
 }
 
 resource "google_compute_router" "router" {
