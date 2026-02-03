@@ -41,8 +41,8 @@ variable "common_resource_id" {
 
 variable "custom_vpc_name" {
   type        = string
-  default     = ""
   description = "A custom name for the VPC network. If not provided, a name will be generated."
+  default     = ""
 }
 
 variable "custom_router_name" {
