@@ -106,10 +106,10 @@ locals {
     ] : var.subnets,
     [
       {
-        name           = "public",
-        ip_cidr_range  = cidrsubnet(local.valid_subnet_range, local.network_size_step, 1),
-        region         = local.region,
-        allow_nat      = true
+        name          = "public",
+        ip_cidr_range = cidrsubnet(local.valid_subnet_range, local.network_size_step, 1),
+        region        = local.region,
+        allow_nat     = true
       },
       {
         name          = "private",
