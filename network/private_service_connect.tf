@@ -19,10 +19,10 @@ resource "google_compute_global_address" "psc_ip_range" {
 }
 
 resource "google_service_networking_connection" "private_vpc_connection" {
-  for_each   = local.enable_private_service_connect ? toset(["psc"]) : toset([])
-  provider   = google-beta
-  network    = google_compute_network.vpc_network.id
-  service    = "servicenetworking.googleapis.com"
+  for_each = local.enable_private_service_connect ? toset(["psc"]) : toset([])
+  provider = google-beta
+  network  = google_compute_network.vpc_network.id
+  service  = "servicenetworking.googleapis.com"
 
   reserved_peering_ranges = [one(values(google_compute_global_address.psc_ip_range)).name]
   depends_on              = [google_project_service.enable_service_networking_api]
@@ -30,9 +30,9 @@ resource "google_service_networking_connection" "private_vpc_connection" {
 
 resource "google_compute_network_peering_routes_config" "peering_primary_routes" {
   for_each = local.enable_private_service_connect ? toset(["psc"]) : toset([])
-  project = local.project_id
-  peering = "servicenetworking-googleapis-com"
-  network = google_compute_network.vpc_network.name
+  project  = local.project_id
+  peering  = "servicenetworking-googleapis-com"
+  network  = google_compute_network.vpc_network.name
 
   # exporting custom routes is required to allow peered networks to use Transparent Squid.
   # enabled for cloud_build_worker_pool

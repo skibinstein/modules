@@ -8,7 +8,7 @@ terraform:
     google: "~> 7.16.0"
 
 network:
-  source: "github.com/skibinstein/modules//network?ref=1.4.0"
+  source: "github.com/skibinstein/modules//network?ref=1.5.0"
   depends_on: []
   items:
     - name: "main-vpc"

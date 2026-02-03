@@ -41,8 +41,8 @@ variable "common_resource_id" {
 
 variable "custom_vpc_name" {
   type        = string
-  default     = ""
   description = "A custom name for the VPC network. If not provided, a name will be generated."
+  default     = ""
 }
 
 variable "custom_router_name" {
@@ -139,15 +139,15 @@ variable "custom_allow_private_google_apis_fw_name" {
 variable "subnets" {
   description = "A list of subnet objects to create in the VPC. If not provided, a default 'public' and 'private' subnet will be created."
   type = list(object({
-    name                   = string
-    ip_cidr_range          = string
-    region                 = optional(string)
-    allow_nat              = optional(bool)
-    enable_private_access  = optional(bool)
+    name                  = string
+    ip_cidr_range         = string
+    region                = optional(string)
+    allow_nat             = optional(bool)
+    enable_private_access = optional(bool)
     flow_logs_config = optional(object({
-      flow_sampling         = optional(number)
-      aggregation_interval  = optional(string)
-      metadata              = optional(string)
+      flow_sampling        = optional(number)
+      aggregation_interval = optional(string)
+      metadata             = optional(string)
     }))
   }))
   default = null
